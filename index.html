@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Nurses Check In – Chat Prototype</title>
+<style>
+:root{--bg:#f4f8f8;--card:#fff;--ink:#17323a;--mute:#5d7279;--acc:#0f7c8a;--acc-ink:#fff;--me:#0f7c8a;--bot:#e6f1f2;--line:#d3e2e4;--warn:#fff4e0;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#10191c;--card:#18262a;--ink:#e4eff1;--mute:#93a9ae;--acc:#3db5c4;--acc-ink:#07262b;--me:#1c7f8c;--bot:#203238;--line:#2c4249;--warn:#3a3020}}
+:root[data-theme="dark"]{--bg:#10191c;--card:#18262a;--ink:#e4eff1;--mute:#93a9ae;--acc:#3db5c4;--acc-ink:#07262b;--me:#1c7f8c;--bot:#203238;--line:#2c4249;--warn:#3a3020}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--ink);font:16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;display:flex;justify-content:center}
+.app{display:flex;flex-direction:column;width:100%;max-width:640px;height:100%;background:var(--card);border-left:1px solid var(--line);border-right:1px solid var(--line)}
+header{padding:14px 16px;border-bottom:1px solid var(--line)}
+header h1{margin:0;font-size:18px}
+header p{margin:2px 0 0;font-size:13px;color:var(--mute)}
+.note{background:var(--warn);font-size:12.5px;padding:8px 16px;border-bottom:1px solid var(--line)}
+#log{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:10px}
+.m{max-width:85%;padding:10px 14px;border-radius:16px;white-space:pre-wrap;word-wrap:break-word}
+.bot{background:var(--bot);align-self:flex-start;border-bottom-left-radius:4px}
+.me{background:var(--me);color:#fff;align-self:flex-end;border-bottom-right-radius:4px}
+.chips{display:flex;flex-wrap:wrap;gap:8px;padding:0 16px 8px}
+.chips button{border:1px solid var(--acc);background:transparent;color:var(--acc);border-radius:20px;padding:8px 14px;font:inherit;cursor:pointer}
+.chips button:hover{background:var(--acc);color:var(--acc-ink)}
+.bar{display:flex;gap:8px;padding:10px 16px;border-top:1px solid var(--line)}
+.bar input{flex:1;min-width:0;padding:11px 14px;border:1px solid var(--line);border-radius:22px;background:var(--bg);color:var(--ink);font:inherit}
+.bar button{border:0;background:var(--acc);color:var(--acc-ink);border-radius:22px;padding:0 18px;font:inherit;font-weight:600;cursor:pointer}
+.bar button:disabled{opacity:.5;cursor:default}
+.foot{font-size:11.5px;color:var(--mute);padding:0 16px 8px;text-align:center}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <h1>Nurses Check In</h1>
+    <p>Fortnightly wellbeing check-in · Taha Hinengaro · Western Health (prototype)</p>
+  </header>
+  <div class="note">This is a supportive prototype, not a psychologist or emergency service. Please don't share identifiable patient details. In an emergency call 000. Lifeline 13 11 14 · Nurse &amp; Midwife Support 1800 667 877.</div>
+  <div id="log" aria-live="polite"></div>
+  <div class="chips" id="chips">
+    <button data-v="I'm doing ok">I'm doing ok</button>
+    <button data-v="I'm feeling stressed">I'm feeling stressed</button>
+    <button data-v="I need support">I need support</button>
+  </div>
+  <form class="bar" onsubmit="return false">
+    <input id="inp" placeholder="Type your message…" autocomplete="off" aria-label="Message">
+    <button id="send" type="submit">Send</button>
+  </form>
+  <div class="foot">Prototype for RMIT WHSW Assessment 3 · AI-generated replies</div>
+</div>
+<script>
+const SYSTEM = `You are "Check In", a supportive wellbeing assistant for nurses at Western Health (Melbourne, Australia). You run short, fortnightly check-ins under the Nurses Check In program (Taha Hinengaro, mental wellbeing, from the Te Whare Tapa Whā model).
+Knowledge: you apply evidence-informed knowledge of stress, burnout, compassion fatigue, moral distress, workplace violence and trauma exposure in nursing, plus psychological hazards as described by Safe Work Australia. Nurses work shifts and are often tired.
+Style: warm, calm, non-judgemental, plain English. Keep replies short (2-5 sentences). Ask only ONE question at a time. Reflect back what you hear before suggesting anything. Reply in the language the nurse writes in.
+Flow: the nurse picks "I'm doing ok", "I'm feeling stressed" or "I need support".
+- ok: ask what is helping them feel okay, and affirm it.
+- stressed: invite them to debrief what happened, then offer 1-2 small strategies (e.g. slow breathing, a short reflective note, talking with a trusted colleague).
+- need support: respond with care, offer to connect them with a human support person (peer, manager, Employee Assistance Program, Nurse & Midwife Support 1800 667 877).
+Never: diagnose, label mental illness, recommend medication, claim to be a psychologist, or ask for patient-identifying details (remind them not to share these).
+Safety: if the nurse mentions self-harm, suicide, abuse, violence or immediate danger, drop the usual flow, respond with care, and direct them to 000 for emergencies, Lifeline 13 11 14, and Nurse & Midwife Support 1800 667 877, and encourage contacting a trusted person right now.
+You are an AI, say so if asked. Do not promise confidentiality; explain the real data-sharing rules would be set by Western Health.`;
+
+const log = document.getElementById('log'), inp = document.getElementById('inp'),
+      send = document.getElementById('send'), chips = document.getElementById('chips');
+const hist = [];
+let sample = null, busy = false;
+
+function add(role, text){
+  const d = document.createElement('div');
+  d.className = 'm ' + (role === 'user' ? 'me' : 'bot');
+  d.textContent = text;
+  log.appendChild(d); log.scrollTop = log.scrollHeight;
+  return d;
+}
+add('assistant', "Hi, I'm Check In. This is a short, private-feeling space to pause after your shift. How are you feeling at work right now?");
+
+(async () => {
+  try { sample = await claude.use('sample'); } catch(e) { sample = null; }
+  if (!sample) { send.disabled = true; add('assistant', 'The AI chat is not available in this view. Open the page in claude.ai to try it.'); }
+})();
+
+async function go(text){
+  text = (text || '').trim();
+  if (!text || busy || !sample) return;
+  busy = true; send.disabled = true; chips.style.display = 'none'; inp.value = '';
+  add('user', text); hist.push({role:'user', content:text});
+  const out = add('assistant', '…');
+  const turns = [{role:'user', content: SYSTEM + '\n\nThe conversation starts now. Check In has already greeted the nurse.'},
+                 {role:'assistant', content:'Understood. I will follow these instructions.'}, ...hist];
+  try {
+    const r = await sample(turns, {cache:false, onText:({text}) => { out.textContent = text; log.scrollTop = log.scrollHeight; }});
+    out.textContent = r.text; hist.push({role:'assistant', content:r.text});
+  } catch(e) {
+    out.textContent = 'Sorry, something went wrong. Please try again in a moment.'; hist.pop();
+  }
+  busy = false; send.disabled = false; inp.focus();
+}
+send.addEventListener('click', () => go(inp.value));
+inp.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); go(inp.value); } });
+chips.addEventListener('click', e => { if (e.target.dataset.v) go(e.target.dataset.v); });
+</script>
+</body>
+</html>
