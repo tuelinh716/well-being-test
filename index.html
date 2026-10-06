@@ -1,104 +1,278 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en-AU">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Nurses Check In – Chat Prototype</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Nurse Wellbeing Self-Check</title>
 <style>
-:root{--bg:#f4f8f8;--card:#fff;--ink:#17323a;--mute:#5d7279;--acc:#0f7c8a;--acc-ink:#fff;--me:#0f7c8a;--bot:#e6f1f2;--line:#d3e2e4;--warn:#fff4e0;
-box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#10191c;--card:#18262a;--ink:#e4eff1;--mute:#93a9ae;--acc:#3db5c4;--acc-ink:#07262b;--me:#1c7f8c;--bot:#203238;--line:#2c4249;--warn:#3a3020}}
-:root[data-theme="dark"]{--bg:#10191c;--card:#18262a;--ink:#e4eff1;--mute:#93a9ae;--acc:#3db5c4;--acc-ink:#07262b;--me:#1c7f8c;--bot:#203238;--line:#2c4249;--warn:#3a3020}
-html,body{height:100%;margin:0}
-body{background:var(--bg);color:var(--ink);font:16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;display:flex;justify-content:center}
-.app{display:flex;flex-direction:column;width:100%;max-width:640px;height:100%;background:var(--card);border-left:1px solid var(--line);border-right:1px solid var(--line)}
-header{padding:14px 16px;border-bottom:1px solid var(--line)}
-header h1{margin:0;font-size:18px}
-header p{margin:2px 0 0;font-size:13px;color:var(--mute)}
-.note{background:var(--warn);font-size:12.5px;padding:8px 16px;border-bottom:1px solid var(--line)}
-#log{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:10px}
-.m{max-width:85%;padding:10px 14px;border-radius:16px;white-space:pre-wrap;word-wrap:break-word}
-.bot{background:var(--bot);align-self:flex-start;border-bottom-left-radius:4px}
-.me{background:var(--me);color:#fff;align-self:flex-end;border-bottom-right-radius:4px}
-.chips{display:flex;flex-wrap:wrap;gap:8px;padding:0 16px 8px}
-.chips button{border:1px solid var(--acc);background:transparent;color:var(--acc);border-radius:20px;padding:8px 14px;font:inherit;cursor:pointer}
-.chips button:hover{background:var(--acc);color:var(--acc-ink)}
-.bar{display:flex;gap:8px;padding:10px 16px;border-top:1px solid var(--line)}
-.bar input{flex:1;min-width:0;padding:11px 14px;border:1px solid var(--line);border-radius:22px;background:var(--bg);color:var(--ink);font:inherit}
-.bar button{border:0;background:var(--acc);color:var(--acc-ink);border-radius:22px;padding:0 18px;font:inherit;font-weight:600;cursor:pointer}
-.bar button:disabled{opacity:.5;cursor:default}
-.foot{font-size:11.5px;color:var(--mute);padding:0 16px 8px;text-align:center}
+  :root {
+    --page: #f2f5f3; --panel: #fff; --text: #1d3430; --soft-text: #5b6f69; --border: #d3ddd8;
+    --main: #1e6b62; --on-main: #fff; --tint: #e1eeeb;
+    --body-c: #c0603c; --mind-c: #3b6dbd; --fam-c: #8559b3; --spirit-c: #2e8c68;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --page: #0f1a18; --panel: #172623; --text: #e5f0ed; --soft-text: #9ab1ab; --border: #2a3f3a;
+      --main: #5fc2b4; --on-main: #0b1b18; --tint: #1f3733;
+      --body-c: #e38a66; --mind-c: #7ca3ea; --fam-c: #b58ade; --spirit-c: #5fc59a;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--page); color: var(--text);
+    font: 16px/1.55 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  main { max-width: 640px; margin: 0 auto; padding: 24px 16px 56px; }
+  h1, h2, h3 { font-family: Georgia, "Times New Roman", serif; margin: 0 0 10px; line-height: 1.25; }
+  h1 { font-size: 1.9rem; } h2 { font-size: 1.4rem; } h3 { font-size: 1.1rem; }
+  p { margin: 0 0 12px; }
+  .quiet { color: var(--soft-text); }
+  .box { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 22px; }
+  button { font: inherit; cursor: pointer; width: 100%; text-align: left; padding: 12px 16px;
+    border-radius: 8px; border: 1px solid var(--border); background: var(--panel); color: var(--text); }
+  button:hover { border-color: var(--main); }
+  button:focus-visible { outline: 3px solid var(--main); outline-offset: 2px; }
+  button.go { background: var(--main); color: var(--on-main); border-color: var(--main);
+    width: auto; text-align: center; font-weight: 600; padding: 12px 26px; }
+  button.back { background: none; border: 0; width: auto; padding: 8px 0; color: var(--soft-text); text-decoration: underline; }
+  #answers { display: grid; gap: 10px; margin: 18px 0 8px; }
+  #meter { height: 6px; background: var(--border); border-radius: 3px; margin-bottom: 18px; overflow: hidden; }
+  #meter div { height: 100%; width: 0; background: var(--main); transition: width .2s; }
+  #question { font-family: Georgia, serif; font-size: 1.2rem; line-height: 1.4; }
+  .hidden { display: none; }
+  .score-row { display: grid; grid-template-columns: 130px 1fr 44px; gap: 10px; align-items: center; margin-bottom: 12px; font-size: .95rem; }
+  .track { height: 12px; background: var(--border); border-radius: 6px; overflow: hidden; }
+  .track div { height: 100%; border-radius: 6px; }
+  .suggest { border-left: 5px solid var(--main); background: var(--tint); padding: 14px 16px; border-radius: 0 8px 8px 0; margin: 14px 0; }
+  svg { display: block; margin: 8px auto; max-width: 100%; }
+  .footnote { font-size: .88rem; color: var(--soft-text); margin-top: 18px; }
+  @media (max-width: 480px) { .score-row { grid-template-columns: 100px 1fr 38px; } }
 </style>
 </head>
 <body>
-<div class="app">
-  <header>
-    <h1>Nurses Check In</h1>
-    <p>Fortnightly wellbeing check-in · Taha Hinengaro · Western Health (prototype)</p>
-  </header>
-  <div class="note">This is a supportive prototype, not a psychologist or emergency service. Please don't share identifiable patient details. In an emergency call 000. Lifeline 13 11 14 · Nurse &amp; Midwife Support 1800 667 877.</div>
-  <div id="log" aria-live="polite"></div>
-  <div class="chips" id="chips">
-    <button data-v="I'm doing ok">I'm doing ok</button>
-    <button data-v="I'm feeling stressed">I'm feeling stressed</button>
-    <button data-v="I need support">I need support</button>
-  </div>
-  <form class="bar" onsubmit="return false">
-    <input id="inp" placeholder="Type your message…" autocomplete="off" aria-label="Message">
-    <button id="send" type="submit">Send</button>
-  </form>
-  <div class="foot">Prototype for RMIT WHSW Assessment 3 · AI-generated replies</div>
-</div>
+<main>
+
+<section id="welcome" class="box">
+  <h1>Wellbeing Self-Check</h1>
+  <p>Twenty-four statements about the last two weeks at work. Your answers are sorted into the four parts of Te Whare Tapa Whā, and you'll see which program looks like the best fit.</p>
+  <p class="quiet">This is a prompt for reflection, not a clinical assessment. It takes around four minutes.</p>
+  <button class="go" id="startBtn">Start</button>
+</section>
+
+<section id="quiz" class="box hidden">
+  <div id="meter"><div id="meterFill"></div></div>
+  <div class="quiet" id="counter"></div>
+  <p id="question"></p>
+  <div id="answers"></div>
+  <button class="back" id="backBtn">Back</button>
+</section>
+
+<section id="results" class="box hidden">
+  <h2>Your profile</h2>
+  <p class="quiet">Scores run from 1 to 10. The higher the score, the more that area could use some attention.</p>
+  <svg id="chart" viewBox="0 0 360 300" role="img" aria-label="Radar chart of the four wellbeing areas"></svg>
+  <div id="scoreList"></div>
+  <div id="suggestions"></div>
+  <p class="footnote">If things feel like too much right now, contact your Employee Assistance Program or call Lifeline on 13 11 14.</p>
+  <button class="go" id="againBtn">Do it again</button>
+</section>
+
+</main>
+
 <script>
-const SYSTEM = `You are "Check In", a supportive wellbeing assistant for nurses at Western Health (Melbourne, Australia). You run short, fortnightly check-ins under the Nurses Check In program (Taha Hinengaro, mental wellbeing, from the Te Whare Tapa Whā model).
-Knowledge: you apply evidence-informed knowledge of stress, burnout, compassion fatigue, moral distress, workplace violence and trauma exposure in nursing, plus psychological hazards as described by Safe Work Australia. Nurses work shifts and are often tired.
-Style: warm, calm, non-judgemental, plain English. Keep replies short (2-5 sentences). Ask only ONE question at a time. Reflect back what you hear before suggesting anything. Reply in the language the nurse writes in.
-Flow: the nurse picks "I'm doing ok", "I'm feeling stressed" or "I need support".
-- ok: ask what is helping them feel okay, and affirm it.
-- stressed: invite them to debrief what happened, then offer 1-2 small strategies (e.g. slow breathing, a short reflective note, talking with a trusted colleague).
-- need support: respond with care, offer to connect them with a human support person (peer, manager, Employee Assistance Program, Nurse & Midwife Support 1800 667 877).
-Never: diagnose, label mental illness, recommend medication, claim to be a psychologist, or ask for patient-identifying details (remind them not to share these).
-Safety: if the nurse mentions self-harm, suicide, abuse, violence or immediate danger, drop the usual flow, respond with care, and direct them to 000 for emergencies, Lifeline 13 11 14, and Nurse & Midwife Support 1800 667 877, and encourage contacting a trusted person right now.
-You are an AI, say so if asked. Do not promise confidentiality; explain the real data-sharing rules would be set by Western Health.`;
+var areas = {
+  body:   { name: "Taha Tinana",   label: "Physical",  colour: "var(--body-c)",
+            program: "Nurse Physical Wellbeing Program",
+            blurb: "Warm-ups, short stretches and the Nurse Fitness Club, so recovery is part of the shift." },
+  mind:   { name: "Taha Hinengaro", label: "Mental",   colour: "var(--mind-c)",
+            program: "Nurses Check-In Program",
+            blurb: "Check-ins every fortnight to say how you're going, debrief hard shifts and find the right support." },
+  family: { name: "Taha Whānau",   label: "Family",    colour: "var(--fam-c)",
+            program: "Nurse Connection Program",
+            blurb: "Shared meals each month, small group conversations and a chance to thank colleagues." },
+  spirit: { name: "Taha Wairua",   label: "Spiritual", colour: "var(--spirit-c)",
+            program: "Nurse Meaning & Connection Program",
+            blurb: "Meaning check-ins, guided pauses and Values in Practice sessions to reconnect with purpose." }
+};
 
-const log = document.getElementById('log'), inp = document.getElementById('inp'),
-      send = document.getElementById('send'), chips = document.getElementById('chips');
-const hist = [];
-let sample = null, busy = false;
+// [area, statement]. Six per area, mixed up so the order doesn't give the game away.
+var statements = [
+  ["body",   "By the end of a shift I'm physically spent."],
+  ["mind",   "I feel tense, anxious or swamped when I'm at work."],
+  ["family", "I feel left out or isolated from my colleagues."],
+  ["spirit", "I wonder whether my work still matters."],
+  ["body",   "I don't sleep well, or I wake up still tired."],
+  ["mind",   "Stressful moments from my shift keep replaying after I get home."],
+  ["family", "There's nobody at work I'd feel comfortable asking for help."],
+  ["spirit", "I've lost touch with the reasons I became a nurse."],
+  ["body",   "My back, feet, joints or muscles ache after work."],
+  ["mind",   "I struggle to switch off from work."],
+  ["family", "I don't feel like I really belong in my team."],
+  ["spirit", "When a patient suffers or dies, it stays with me and I can't make sense of it."],
+  ["body",   "I skip meals or live on quick, unhealthy food during shifts."],
+  ["mind",   "I've been irritable, low or flat in my mood."],
+  ["family", "Apart from handover and tasks, I hardly ever get time with colleagues."],
+  ["spirit", "Ethical dilemmas at work leave me unsettled or torn."],
+  ["body",   "I find it hard to recover physically between shifts."],
+  ["mind",   "I keep my feelings to myself because there's no safe time or place to share them."],
+  ["family", "After work I'm too tired to keep up with family and friends."],
+  ["spirit", "I feel like I'm going through the motions."],
+  ["body",   "I rarely have the time or energy to move my body the way I'd like to."],
+  ["mind",   "After incidents like aggression or a critical event, I don't get to debrief."],
+  ["family", "I feel like my team doesn't notice or value what I do."],
+  ["spirit", "I feel cut off from what grounds me, such as values, culture, faith, community or nature."]
+];
 
-function add(role, text){
-  const d = document.createElement('div');
-  d.className = 'm ' + (role === 'user' ? 'me' : 'bot');
-  d.textContent = text;
-  log.appendChild(d); log.scrollTop = log.scrollHeight;
-  return d;
+var choices = ["Never", "Rarely", "Sometimes", "Often"];
+var sequence = [], given = [], pos = 0;
+
+function el(id) { return document.getElementById(id); }
+
+function showOnly(name) {
+  ["welcome", "quiz", "results"].forEach(function (n) {
+    el(n).classList.toggle("hidden", n !== name);
+  });
+  window.scrollTo(0, 0);
 }
-add('assistant', "Hi, I'm Check In. This is a short, private-feeling space to pause after your shift. How are you feeling at work right now?");
 
-(async () => {
-  try { sample = await claude.use('sample'); } catch(e) { sample = null; }
-  if (!sample) { send.disabled = true; add('assistant', 'The AI chat is not available in this view. Open the page in claude.ai to try it.'); }
-})();
-
-async function go(text){
-  text = (text || '').trim();
-  if (!text || busy || !sample) return;
-  busy = true; send.disabled = true; chips.style.display = 'none'; inp.value = '';
-  add('user', text); hist.push({role:'user', content:text});
-  const out = add('assistant', '…');
-  const turns = [{role:'user', content: SYSTEM + '\n\nThe conversation starts now. Check In has already greeted the nurse.'},
-                 {role:'assistant', content:'Understood. I will follow these instructions.'}, ...hist];
-  try {
-    const r = await sample(turns, {cache:false, onText:({text}) => { out.textContent = text; log.scrollTop = log.scrollHeight; }});
-    out.textContent = r.text; hist.push({role:'assistant', content:r.text});
-  } catch(e) {
-    out.textContent = 'Sorry, something went wrong. Please try again in a moment.'; hist.pop();
+function shuffle(list) {
+  for (var i = list.length - 1; i > 0; i--) {
+    var j = Math.floor(Math.random() * (i + 1));
+    var t = list[i]; list[i] = list[j]; list[j] = t;
   }
-  busy = false; send.disabled = false; inp.focus();
+  return list;
 }
-send.addEventListener('click', () => go(inp.value));
-inp.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); go(inp.value); } });
-chips.addEventListener('click', e => { if (e.target.dataset.v) go(e.target.dataset.v); });
+
+function startQuiz() {
+  sequence = shuffle(statements.map(function (_, i) { return i; }));
+  given = [];
+  pos = 0;
+  showOnly("quiz");
+  showQuestion();
+}
+
+function showQuestion() {
+  el("counter").textContent = "Question " + (pos + 1) + " of " + statements.length;
+  el("meterFill").style.width = (pos / statements.length * 100) + "%";
+  el("question").textContent = statements[sequence[pos]][1];
+  el("backBtn").style.visibility = pos > 0 ? "visible" : "hidden";
+
+  var box = el("answers");
+  box.innerHTML = "";
+  choices.forEach(function (text, value) {
+    var b = document.createElement("button");
+    b.textContent = text;
+    b.onclick = function () { answer(value); };
+    box.appendChild(b);
+  });
+}
+
+function answer(value) {
+  given[pos] = value;
+  pos++;
+  if (pos < statements.length) showQuestion(); else finish();
+}
+
+// Six questions x max 3 = 18 raw points, stretched onto 1-10.
+function toTen(raw) { return Math.round(1 + raw * 9 / 18); }
+
+function rawFor(area) {
+  var total = 0;
+  sequence.forEach(function (statementIndex, n) {
+    if (statements[statementIndex][0] === area) total += given[n];
+  });
+  return total;
+}
+
+function rating(score) {
+  if (score <= 4) return "Doing well";
+  if (score <= 7) return "Needs some attention";
+  return "Needs priority attention";
+}
+
+function finish() {
+  var scores = {};
+  Object.keys(areas).forEach(function (a) { scores[a] = toTen(rawFor(a)); });
+  var ranked = Object.keys(scores).sort(function (a, b) { return scores[b] - scores[a]; });
+  drawChart(scores);
+  drawScores(scores, ranked);
+  drawSuggestions(scores, ranked);
+  showOnly("results");
+}
+
+function drawChart(scores) {
+  var cx = 180, cy = 150, r = 105;
+  var dir = { body: [0, -1], mind: [1, 0], family: [0, 1], spirit: [-1, 0] };
+  var svg = "";
+
+  [2.5, 5, 7.5, 10].forEach(function (level) {
+    var pts = Object.keys(dir).map(function (a) {
+      return (cx + dir[a][0] * r * level / 10) + "," + (cy + dir[a][1] * r * level / 10);
+    }).join(" ");
+    svg += '<polygon points="' + pts + '" fill="none" stroke="var(--border)"/>';
+  });
+  Object.keys(dir).forEach(function (a) {
+    svg += '<line x1="' + cx + '" y1="' + cy + '" x2="' + (cx + dir[a][0] * r) + '" y2="' + (cy + dir[a][1] * r) + '" stroke="var(--border)"/>';
+  });
+
+  var shape = Object.keys(dir).map(function (a) {
+    return (cx + dir[a][0] * r * scores[a] / 10) + "," + (cy + dir[a][1] * r * scores[a] / 10);
+  }).join(" ");
+  svg += '<polygon points="' + shape + '" fill="var(--main)" fill-opacity=".25" stroke="var(--main)" stroke-width="2.5"/>';
+
+  var spots = {
+    body:   [cx, 22, "middle"],
+    mind:   [cx + r + 8, cy + 4, "start"],
+    family: [cx, cy + r + 22, "middle"],
+    spirit: [cx - r - 8, cy + 4, "end"]
+  };
+  Object.keys(spots).forEach(function (a) {
+    svg += '<text x="' + spots[a][0] + '" y="' + spots[a][1] + '" text-anchor="' + spots[a][2] +
+           '" font-size="13" font-weight="600" fill="var(--text)">' + areas[a].label + '</text>';
+  });
+  el("chart").innerHTML = svg;
+}
+
+function drawScores(scores, ranked) {
+  el("scoreList").innerHTML = ranked.map(function (a) {
+    return '<div class="score-row"><b>' + areas[a].name + '</b>' +
+      '<div class="track" title="' + rating(scores[a]) + '"><div style="width:' + scores[a] * 10 + '%;background:' + areas[a].colour + '"></div></div>' +
+      '<span>' + scores[a] + '/10</span></div>';
+  }).join("");
+}
+
+function suggestion(area, score, tag) {
+  return '<div class="suggest" style="border-left-color:' + areas[area].colour + '">' +
+    '<h3>' + areas[area].program + '</h3>' +
+    '<p class="quiet" style="margin-bottom:6px">' + tag + ': ' + areas[area].name + ' (' + rating(score) + ')</p>' +
+    '<p>' + areas[area].blurb + '</p></div>';
+}
+
+function drawSuggestions(scores, ranked) {
+  var top = scores[ranked[0]];
+  var out = "";
+
+  if (top <= 4) {
+    out = '<div class="suggest"><h3>Things look balanced</h3>' +
+      '<p>Nothing stands out right now. Feel free to look at any of the four programs, and try this again in a few weeks.</p></div>';
+  } else {
+    var tied = ranked.filter(function (a) { return scores[a] === top; });
+    if (tied.length > 1) {
+      out = '<div class="suggest"><h3>More than one area stands out</h3><p>Pick whichever program feels most useful today.</p></div>';
+      tied.forEach(function (a) { out += suggestion(a, scores[a], "Main area"); });
+    } else {
+      out += suggestion(ranked[0], top, "Main area for support");
+      var next = ranked[1];
+      if (scores[next] >= 5 || top - scores[next] <= 1) {
+        out += suggestion(next, scores[next], "Worth keeping an eye on");
+      }
+    }
+  }
+  out += '<p class="quiet">All four programs are open to you whenever you want them.</p>';
+  el("suggestions").innerHTML = out;
+}
+
+el("startBtn").onclick = startQuiz;
+el("againBtn").onclick = startQuiz;
+el("backBtn").onclick = function () { if (pos > 0) { pos--; showQuestion(); } };
 </script>
 </body>
 </html>
